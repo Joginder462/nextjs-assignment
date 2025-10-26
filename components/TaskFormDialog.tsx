@@ -141,7 +141,6 @@ export default function TaskFormDialog({
             fullWidth
             margin="normal"
             select
-            defaultValue="todo"
             {...register("status")}
             error={!!errors.status}
             helperText={errors.status?.message}

@@ -131,7 +131,6 @@ export default function ProjectFormDialog({
             fullWidth
             margin="normal"
             select
-            defaultValue="active"
             {...register("status")}
             error={!!errors.status}
             helperText={errors.status?.message}
