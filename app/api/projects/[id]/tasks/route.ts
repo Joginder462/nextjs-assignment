@@ -11,8 +11,13 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { id } = await params;
   await dbConnect();
-  const project = await Project.findOne({ _id: id, user: (session.user as { id: string }).id }).lean();
-  if (!project) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  const userId = (session.user as { id: string }).id;
+  console.log("[Tasks GET] Looking for project:", { projectId: id, userId });
+  const project = await Project.findOne({ _id: id, user: userId }).lean();
+  if (!project) {
+    console.log("[Tasks GET] Project not found or unauthorized");
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
   
   const { searchParams } = req.nextUrl;
   const status = searchParams.get("status");

@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useSession, signOut } from "next-auth/react";
 import axios from "axios";
+import ProjectFormDialog from "@/components/ProjectFormDialog";
 import { 
   Box, 
   Button, 
@@ -41,6 +42,8 @@ export default function DashboardPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [pagination, setPagination] = useState<PaginationData>({ page: 1, limit: 10, total: 0, totalPages: 0 });
   const [loading, setLoading] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingProject, setEditingProject] = useState<Project | null>(null);
 
   useEffect(() => {
     if (status === "authenticated") {
@@ -63,6 +66,20 @@ export default function DashboardPage() {
 
   const handlePageChange = (_event: React.ChangeEvent<unknown>, value: number) => {
     loadProjects(value);
+  };
+
+  const handleOpenDialog = (project?: Project) => {
+    setEditingProject(project || null);
+    setDialogOpen(true);
+  };
+
+  const handleCloseDialog = () => {
+    setDialogOpen(false);
+    setEditingProject(null);
+  };
+
+  const handleSuccess = () => {
+    loadProjects(pagination.page);
   };
 
   if (status === "loading") {
@@ -108,6 +125,7 @@ export default function DashboardPage() {
             variant="contained" 
             startIcon={<AddIcon />}
             size="large"
+            onClick={() => handleOpenDialog()}
           >
             New Project
           </Button>
@@ -169,14 +187,19 @@ export default function DashboardPage() {
                         color={p.status === "active" ? "success" : "default"}
                       />
                     </CardContent>
-                    <CardActions>
+                    <CardActions sx={{ justifyContent: "space-between" }}>
                       <Button 
                         component={Link} 
                         href={`/projects/${p._id}`}
                         size="small"
-                        fullWidth
                       >
                         View Details
+                      </Button>
+                      <Button 
+                        size="small"
+                        onClick={() => handleOpenDialog(p)}
+                      >
+                        Edit
                       </Button>
                     </CardActions>
                   </Card>
@@ -198,6 +221,13 @@ export default function DashboardPage() {
           </>
         )}
       </Container>
+
+      <ProjectFormDialog
+        open={dialogOpen}
+        onClose={handleCloseDialog}
+        onSuccess={handleSuccess}
+        project={editingProject}
+      />
     </Box>
   );
 }

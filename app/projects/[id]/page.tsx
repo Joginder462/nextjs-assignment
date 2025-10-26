@@ -2,6 +2,8 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import axios from "axios";
+import TaskFormDialog from "@/components/TaskFormDialog";
+import ProjectFormDialog from "@/components/ProjectFormDialog";
 import { 
   Box, 
   Container, 
@@ -20,7 +22,8 @@ import {
 } from "@mui/material";
 import { 
   ArrowBack as ArrowBackIcon, 
-  Add as AddIcon
+  Add as AddIcon,
+  Edit as EditIcon
 } from "@mui/icons-material";
 
 type Project = {
@@ -35,6 +38,7 @@ type Task = {
   title: string;
   description: string;
   status: string;
+  dueDate?: string | null;
 };
 
 type PaginationData = {
@@ -53,6 +57,9 @@ export default function ProjectDetailPage() {
   const [loading, setLoading] = useState(true);
   const [tasksLoading, setTasksLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [taskDialogOpen, setTaskDialogOpen] = useState(false);
+  const [projectDialogOpen, setProjectDialogOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
 
   const loadProject = async () => {
     try {
@@ -100,6 +107,32 @@ export default function ProjectDetailPage() {
 
   const handlePageChange = (_event: React.ChangeEvent<unknown>, value: number) => {
     loadTasks(value);
+  };
+
+  const handleOpenTaskDialog = (task?: Task) => {
+    setEditingTask(task || null);
+    setTaskDialogOpen(true);
+  };
+
+  const handleCloseTaskDialog = () => {
+    setTaskDialogOpen(false);
+    setEditingTask(null);
+  };
+
+  const handleTaskSuccess = () => {
+    loadTasks(pagination.page);
+  };
+
+  const handleOpenProjectDialog = () => {
+    setProjectDialogOpen(true);
+  };
+
+  const handleCloseProjectDialog = () => {
+    setProjectDialogOpen(false);
+  };
+
+  const handleProjectSuccess = () => {
+    loadProject();
   };
 
   const getStatusColor = (status: string) => {
@@ -155,11 +188,16 @@ export default function ProjectDetailPage() {
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
             {project.title}
           </Typography>
-          <Chip 
-            label={project.status} 
-            color={project.status === "active" ? "success" : "default"}
-            sx={{ bgcolor: "rgba(255, 255, 255, 0.2)", color: "white" }}
-          />
+          <Stack direction="row" spacing={1}>
+            <IconButton color="inherit" onClick={handleOpenProjectDialog}>
+              <EditIcon />
+            </IconButton>
+            <Chip 
+              label={project.status} 
+              color={project.status === "active" ? "success" : "default"}
+              sx={{ bgcolor: "rgba(255, 255, 255, 0.2)", color: "white" }}
+            />
+          </Stack>
         </Toolbar>
       </AppBar>
 
@@ -188,6 +226,7 @@ export default function ProjectDetailPage() {
             variant="contained" 
             startIcon={<AddIcon />}
             size="large"
+            onClick={() => handleOpenTaskDialog()}
           >
             New Task
           </Button>
@@ -228,15 +267,29 @@ export default function ProjectDetailPage() {
                           <Typography variant="h6" gutterBottom>
                             {t.title}
                           </Typography>
-                          <Typography variant="body2" color="text.secondary">
+                          <Typography variant="body2" color="text.secondary" paragraph>
                             {t.description || "No description"}
                           </Typography>
+                          {t.dueDate && (
+                            <Typography variant="caption" color="text.secondary">
+                              Due: {new Date(t.dueDate).toLocaleDateString()}
+                            </Typography>
+                          )}
                         </Box>
-                        <Chip 
-                          label={t.status} 
-                          color={getStatusColor(t.status)}
-                          size="small"
-                        />
+                        <Stack direction="column" spacing={1} alignItems="flex-end">
+                          <Chip 
+                            label={t.status} 
+                            color={getStatusColor(t.status)}
+                            size="small"
+                          />
+                          <Button 
+                            size="small" 
+                            startIcon={<EditIcon />}
+                            onClick={() => handleOpenTaskDialog(t)}
+                          >
+                            Edit
+                          </Button>
+                        </Stack>
                       </Stack>
                     </CardContent>
                   </Card>
@@ -255,9 +308,24 @@ export default function ProjectDetailPage() {
                 />
               </Box>
             )}
-          </>
+        </>
         )}
       </Container>
+
+      <TaskFormDialog
+        open={taskDialogOpen}
+        onClose={handleCloseTaskDialog}
+        onSuccess={handleTaskSuccess}
+        projectId={params.id}
+        task={editingTask}
+      />
+
+      <ProjectFormDialog
+        open={projectDialogOpen}
+        onClose={handleCloseProjectDialog}
+        onSuccess={handleProjectSuccess}
+        project={project}
+      />
     </Box>
   );
 }
