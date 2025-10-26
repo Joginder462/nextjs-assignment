@@ -1,6 +1,6 @@
 "use client";
 import { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { projectSchema } from "@/lib/validators";
 import type * as yup from "yup";
@@ -39,6 +39,7 @@ export default function ProjectFormDialog({
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors, isSubmitting },
     reset,
     setError,
@@ -126,18 +127,24 @@ export default function ProjectFormDialog({
             error={!!errors.description}
             helperText={errors.description?.message}
           />
-          <TextField
-            label="Status"
-            fullWidth
-            margin="normal"
-            select
-            {...register("status")}
-            error={!!errors.status}
-            helperText={errors.status?.message}
-          >
-            <MenuItem value="active">Active</MenuItem>
-            <MenuItem value="completed">Completed</MenuItem>
-          </TextField>
+          <Controller
+            name="status"
+            control={control}
+            render={({ field }) => (
+              <TextField
+                label="Status"
+                fullWidth
+                margin="normal"
+                select
+                {...field}
+                error={!!errors.status}
+                helperText={errors.status?.message}
+              >
+                <MenuItem value="active">Active</MenuItem>
+                <MenuItem value="completed">Completed</MenuItem>
+              </TextField>
+            )}
+          />
         </DialogContent>
         <DialogActions>
           <Button onClick={handleClose}>Cancel</Button>

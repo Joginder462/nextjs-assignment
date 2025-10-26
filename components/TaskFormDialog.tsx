@@ -136,19 +136,25 @@ export default function TaskFormDialog({
             error={!!errors.description}
             helperText={errors.description?.message}
           />
-          <TextField
-            label="Status"
-            fullWidth
-            margin="normal"
-            select
-            {...register("status")}
-            error={!!errors.status}
-            helperText={errors.status?.message}
-          >
-            <MenuItem value="todo">To Do</MenuItem>
-            <MenuItem value="in-progress">In Progress</MenuItem>
-            <MenuItem value="done">Done</MenuItem>
-          </TextField>
+          <Controller
+            name="status"
+            control={control}
+            render={({ field }) => (
+              <TextField
+                label="Status"
+                fullWidth
+                margin="normal"
+                select
+                {...field}
+                error={!!errors.status}
+                helperText={errors.status?.message}
+              >
+                <MenuItem value="todo">To Do</MenuItem>
+                <MenuItem value="in-progress">In Progress</MenuItem>
+                <MenuItem value="done">Done</MenuItem>
+              </TextField>
+            )}
+          />
           <Controller
             name="dueDate"
             control={control}
