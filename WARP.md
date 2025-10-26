@@ -83,11 +83,14 @@ store/
 - REST conventions: GET (list/single), POST (create), PATCH (update), DELETE
 - All mutations validate input with Yup schemas before DB operations
 - Error responses: 401 (unauthorized), 404 (not found), 400 (validation), 500 (server error)
+- List endpoints support pagination via query params: `?page=1&limit=10`
+- API returns: `{ items, pagination: { page, limit, total, totalPages } }`
 
 **Client-Side State:**
-- Redux manages project list state (`store/projectsSlice.ts`)
-- `fetchProjects` thunk loads projects on dashboard
-- Component-level state via SWR or React Hook Form for forms
+- Dashboard and project detail pages use local state with axios for data fetching
+- Pagination state managed per-component (page, limit, total, totalPages)
+- MUI Pagination component handles page navigation
+- Component-level state via React Hook Form for forms
 
 **Data Relationships:**
 - User → Projects (one-to-many via `user` field)

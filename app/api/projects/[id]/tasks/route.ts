@@ -12,11 +12,30 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   await dbConnect();
   const project = await Project.findOne({ _id: params.id, user: (session.user as { id: string }).id }).lean();
   if (!project) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  const status = req.nextUrl.searchParams.get("status");
+  
+  const { searchParams } = req.nextUrl;
+  const status = searchParams.get("status");
+  const page = parseInt(searchParams.get("page") || "1", 10);
+  const limit = parseInt(searchParams.get("limit") || "10", 10);
+  const skip = (page - 1) * limit;
+  
   const filter: { project: string; status?: string } = { project: params.id };
   if (status) filter.status = status;
-  const tasks = await Task.find(filter).sort({ createdAt: -1 }).lean();
-  return NextResponse.json({ tasks });
+  
+  const [tasks, total] = await Promise.all([
+    Task.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+    Task.countDocuments(filter),
+  ]);
+  
+  return NextResponse.json({ 
+    tasks,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+  });
 }
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {

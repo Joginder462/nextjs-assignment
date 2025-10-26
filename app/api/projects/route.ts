@@ -5,12 +5,31 @@ import { dbConnect } from "@/lib/db";
 import { Project } from "@/models/Project";
 import { projectSchema } from "@/lib/validators";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  
+  const { searchParams } = req.nextUrl;
+  const page = parseInt(searchParams.get("page") || "1", 10);
+  const limit = parseInt(searchParams.get("limit") || "10", 10);
+  const skip = (page - 1) * limit;
+  
   await dbConnect();
-  const projects = await Project.find({ user: (session.user as { id: string }).id }).sort({ createdAt: -1 }).lean();
-  return NextResponse.json({ projects });
+  const filter = { user: (session.user as { id: string }).id };
+  const [projects, total] = await Promise.all([
+    Project.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+    Project.countDocuments(filter),
+  ]);
+  
+  return NextResponse.json({ 
+    projects, 
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+  });
 }
 
 export async function POST(req: NextRequest) {
