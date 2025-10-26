@@ -70,6 +70,10 @@ store/
 
 **Authentication Flow:**
 - NextAuth with JWT sessions stored client-side
+- Middleware (`middleware.ts`) handles route protection and redirects:
+  - Authenticated users accessing `/login` or `/register` → redirect to `/dashboard`
+  - Unauthenticated users accessing `/dashboard` or `/projects/*` → redirect to `/login`
+  - Root `/` redirects authenticated users to `/dashboard`
 - All API routes check session via `getServerSession(authOptions)`
 - User ID injected into JWT token callbacks and available as `session.user.id`
 - Password validation: min 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special char
@@ -104,6 +108,16 @@ Required in `.env.local`:
 - `NEXTAUTH_URL` - Application URL (e.g., http://localhost:3000)
 - `NEXTAUTH_SECRET` - JWT signing secret (must be set to a secure random value)
 
+## UI Components
+
+**Material UI v7 Setup:**
+- Cards with hover effects for projects and tasks
+- AppBar with logout/back navigation
+- Pagination component for lists
+- Color-coded status chips (active/completed for projects, todo/in-progress/done for tasks)
+- Responsive grid layout (xs=12, sm=6, md=4 for project cards)
+- Paper components for auth forms with centered layout
+
 ## Important Notes
 
 - **Install dependencies**: Always use `npm install --legacy-peer-deps` due to React 19 peer dependency conflicts
@@ -111,4 +125,5 @@ Required in `.env.local`:
 - **Mongoose models**: Use conditional export pattern to prevent recompilation errors in dev mode
 - **No type checking script**: Run `npx tsc --noEmit` manually to type check without ESLint
 - **Authentication**: API routes require `getServerSession(authOptions)` - import authOptions from auth route
+- **Middleware**: Uses `getToken` from `next-auth/jwt` to check authentication before page render
 - **Docker**: Dev Dockerfile uses hot-reload via volume mounts; mongo persists data in named volume

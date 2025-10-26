@@ -1,8 +1,27 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import axios from "axios";
-import { Box, Container, Typography, List, ListItem, ListItemText, Chip, CircularProgress, Pagination } from "@mui/material";
+import { 
+  Box, 
+  Container, 
+  Typography, 
+  Card,
+  CardContent,
+  Chip, 
+  CircularProgress, 
+  Pagination,
+  AppBar,
+  Toolbar,
+  IconButton,
+  Button,
+  Stack,
+  Grid
+} from "@mui/material";
+import { 
+  ArrowBack as ArrowBackIcon, 
+  Add as AddIcon
+} from "@mui/icons-material";
 
 type Project = {
   _id: string;
@@ -27,6 +46,7 @@ type PaginationData = {
 
 export default function ProjectDetailPage() {
   const params = useParams<{ id: string }>();
+  const router = useRouter();
   const [project, setProject] = useState<Project | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [pagination, setPagination] = useState<PaginationData>({ page: 1, limit: 10, total: 0, totalPages: 0 });
@@ -69,42 +89,151 @@ export default function ProjectDetailPage() {
     loadTasks(value);
   };
 
-  if (loading) return <Container><CircularProgress /></Container>;
-  if (!project) return <Container><Typography>Project not found</Typography></Container>;
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "done":
+        return "success";
+      case "in-progress":
+        return "warning";
+      default:
+        return "default";
+    }
+  };
+
+  if (loading) {
+    return (
+      <Box display="flex" alignItems="center" justifyContent="center" minHeight="100vh">
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (!project) {
+    return (
+      <Container>
+        <Typography>Project not found</Typography>
+      </Container>
+    );
+  }
 
   return (
-    <Container>
-      <Box mt={4} mb={2}>
-        <Typography variant="h4">{project.title}</Typography>
-        <Typography color="text.secondary">{project.description}</Typography>
-      </Box>
-      <Typography variant="h6" gutterBottom>Tasks</Typography>
-      {tasksLoading ? (
-        <Box display="flex" justifyContent="center" my={3}>
-          <CircularProgress />
-        </Box>
-      ) : (
-        <>
-          <List>
-            {tasks.map((t) => (
-              <ListItem key={t._id}>
-                <ListItemText primary={t.title} secondary={t.description} />
-                <Chip label={t.status} />
-              </ListItem>
-            ))}
-          </List>
-          {pagination.totalPages > 1 && (
-            <Box display="flex" justifyContent="center" mt={3}>
-              <Pagination 
-                count={pagination.totalPages} 
-                page={pagination.page} 
-                onChange={handlePageChange}
-                color="primary"
-              />
-            </Box>
-          )}
-        </>
-      )}
-    </Container>
+    <Box sx={{ flexGrow: 1, minHeight: "100vh", bgcolor: "background.default" }}>
+      <AppBar position="static">
+        <Toolbar>
+          <IconButton 
+            edge="start" 
+            color="inherit" 
+            onClick={() => router.push("/dashboard")}
+            sx={{ mr: 2 }}
+          >
+            <ArrowBackIcon />
+          </IconButton>
+          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+            {project.title}
+          </Typography>
+          <Chip 
+            label={project.status} 
+            color={project.status === "active" ? "success" : "default"}
+            sx={{ bgcolor: "rgba(255, 255, 255, 0.2)", color: "white" }}
+          />
+        </Toolbar>
+      </AppBar>
+
+      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+        <Card sx={{ mb: 4 }}>
+          <CardContent>
+            <Typography variant="h5" gutterBottom fontWeight="bold">
+              {project.title}
+            </Typography>
+            <Typography variant="body1" color="text.secondary" paragraph>
+              {project.description || "No description provided"}
+            </Typography>
+          </CardContent>
+        </Card>
+
+        <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
+          <Box>
+            <Typography variant="h5" fontWeight="bold">
+              Tasks
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Total: {pagination.total} task{pagination.total !== 1 ? "s" : ""}
+            </Typography>
+          </Box>
+          <Button 
+            variant="contained" 
+            startIcon={<AddIcon />}
+            size="large"
+          >
+            New Task
+          </Button>
+        </Stack>
+
+        {tasksLoading ? (
+          <Box display="flex" justifyContent="center" py={8}>
+            <CircularProgress />
+          </Box>
+        ) : tasks.length === 0 ? (
+          <Card sx={{ py: 8, textAlign: "center" }}>
+            <CardContent>
+              <Typography variant="h6" color="text.secondary" gutterBottom>
+                No tasks yet
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Create your first task to get started!
+              </Typography>
+            </CardContent>
+          </Card>
+        ) : (
+          <>
+            <Grid container spacing={2}>
+              {tasks.map((t) => (
+                <Grid item xs={12} key={t._id}>
+                  <Card 
+                    sx={{ 
+                      transition: "transform 0.2s, box-shadow 0.2s",
+                      "&:hover": {
+                        transform: "translateX(4px)",
+                        boxShadow: 2,
+                      },
+                    }}
+                  >
+                    <CardContent>
+                      <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={2}>
+                        <Box flex={1}>
+                          <Typography variant="h6" gutterBottom>
+                            {t.title}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            {t.description || "No description"}
+                          </Typography>
+                        </Box>
+                        <Chip 
+                          label={t.status} 
+                          color={getStatusColor(t.status)}
+                          size="small"
+                        />
+                      </Stack>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              ))}
+            </Grid>
+
+            {pagination.totalPages > 1 && (
+              <Box display="flex" justifyContent="center" mt={4}>
+                <Pagination 
+                  count={pagination.totalPages} 
+                  page={pagination.page} 
+                  onChange={handlePageChange}
+                  color="primary"
+                  size="large"
+                />
+              </Box>
+            )}
+          </>
+        )}
+      </Container>
+    </Box>
   );
 }
