@@ -51,6 +51,8 @@ app/
 
 components/
   Providers.tsx             # Client wrapper: SessionProvider + Redux + MUI Theme
+  ProjectFormDialog.tsx     # Modal form for create/edit projects
+  TaskFormDialog.tsx        # Modal form for create/edit tasks
 
 lib/
   db.ts                     # MongoDB connection with caching
@@ -95,6 +97,13 @@ store/
 - Pagination state managed per-component (page, limit, total, totalPages)
 - MUI Pagination component handles page navigation
 - Component-level state via React Hook Form for forms
+
+**CRUD Operations:**
+- Create/Edit use the same dialog component (determined by presence of entity ID)
+- Forms use React Hook Form with Yup validation
+- Dialog state managed in parent component (open/close, editing entity)
+- Success callback triggers data reload in parent
+- All mutations use native fetch API, reads use axios
 
 **Data Relationships:**
 - User → Projects (one-to-many via `user` field)
