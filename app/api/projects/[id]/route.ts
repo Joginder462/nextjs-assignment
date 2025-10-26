@@ -5,24 +5,26 @@ import { dbConnect } from "@/lib/db";
 import { Project } from "@/models/Project";
 import { projectSchema } from "@/lib/validators";
 
-export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await getServerSession(authOptions);
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const { id } = await params;
   await dbConnect();
-  const project = await Project.findOne({ _id: params.id, user: (session.user as { id: string }).id }).lean();
+  const project = await Project.findOne({ _id: id, user: (session.user as { id: string }).id }).lean();
   if (!project) return NextResponse.json({ error: "Not found" }, { status: 404 });
   return NextResponse.json({ project });
 }
 
-export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await getServerSession(authOptions);
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const { id } = await params;
   try {
     const body = await req.json();
     const data = await projectSchema.validate(body, { abortEarly: false, stripUnknown: true });
     await dbConnect();
     const updated = await Project.findOneAndUpdate(
-      { _id: params.id, user: (session.user as { id: string }).id },
+      { _id: id, user: (session.user as { id: string }).id },
       data,
       { new: true }
     );
@@ -36,11 +38,12 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   }
 }
 
-export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await getServerSession(authOptions);
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const { id } = await params;
   await dbConnect();
-  const deleted = await Project.findOneAndDelete({ _id: params.id, user: (session.user as { id: string }).id });
+  const deleted = await Project.findOneAndDelete({ _id: id, user: (session.user as { id: string }).id });
   if (!deleted) return NextResponse.json({ error: "Not found" }, { status: 404 });
   return NextResponse.json({ ok: true });
 }

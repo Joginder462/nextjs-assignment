@@ -6,11 +6,12 @@ import { Project } from "@/models/Project";
 import { Task } from "@/models/Task";
 import { taskSchema } from "@/lib/validators";
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await getServerSession(authOptions);
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const { id } = await params;
   await dbConnect();
-  const project = await Project.findOne({ _id: params.id, user: (session.user as { id: string }).id }).lean();
+  const project = await Project.findOne({ _id: id, user: (session.user as { id: string }).id }).lean();
   if (!project) return NextResponse.json({ error: "Not found" }, { status: 404 });
   
   const { searchParams } = req.nextUrl;
@@ -19,7 +20,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   const limit = parseInt(searchParams.get("limit") || "10", 10);
   const skip = (page - 1) * limit;
   
-  const filter: { project: string; status?: string } = { project: params.id };
+  const filter: { project: string; status?: string } = { project: id };
   if (status) filter.status = status;
   
   const [tasks, total] = await Promise.all([
@@ -38,16 +39,17 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   });
 }
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await getServerSession(authOptions);
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const { id } = await params;
   try {
     const body = await req.json();
     const data = await taskSchema.validate(body, { abortEarly: false, stripUnknown: true });
     await dbConnect();
-    const project = await Project.findOne({ _id: params.id, user: (session.user as { id: string }).id }).lean();
+    const project = await Project.findOne({ _id: id, user: (session.user as { id: string }).id }).lean();
     if (!project) return NextResponse.json({ error: "Not found" }, { status: 404 });
-    const created = await Task.create({ ...data, project: params.id });
+    const created = await Task.create({ ...data, project: id });
     return NextResponse.json({ task: created });
   } catch (err: unknown) {
     if (err?.name === "ValidationError")

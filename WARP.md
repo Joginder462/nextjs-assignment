@@ -126,4 +126,5 @@ Required in `.env.local`:
 - **No type checking script**: Run `npx tsc --noEmit` manually to type check without ESLint
 - **Authentication**: API routes require `getServerSession(authOptions)` - import authOptions from auth route
 - **Middleware**: Uses `getToken` from `next-auth/jwt` to check authentication before page render
+- **Next.js 16 params**: Route `params` is now a Promise - must `await params` before accessing properties
 - **Docker**: Dev Dockerfile uses hot-reload via volume mounts; mongo persists data in named volume

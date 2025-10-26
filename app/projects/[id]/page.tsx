@@ -52,13 +52,26 @@ export default function ProjectDetailPage() {
   const [pagination, setPagination] = useState<PaginationData>({ page: 1, limit: 10, total: 0, totalPages: 0 });
   const [loading, setLoading] = useState(true);
   const [tasksLoading, setTasksLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const loadProject = async () => {
     try {
       const { data } = await axios.get(`/api/projects/${params.id}`);
       setProject(data.project);
+      setError(null);
     } catch (err) {
-      console.error(err);
+      console.error("Error loading project:", err);
+      if (axios.isAxiosError(err)) {
+        if (err.response?.status === 404) {
+          setError("Project not found");
+        } else if (err.response?.status === 401) {
+          setError("Unauthorized - please log in again");
+        } else {
+          setError(err.response?.data?.error || "Failed to load project");
+        }
+      } else {
+        setError("Failed to load project");
+      }
     } finally {
       setLoading(false);
     }
@@ -111,7 +124,18 @@ export default function ProjectDetailPage() {
   if (!project) {
     return (
       <Container>
-        <Typography>Project not found</Typography>
+        <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" minHeight="100vh">
+          <Typography variant="h5" color="error" gutterBottom>
+            {error || "Project not found"}
+          </Typography>
+          <Button 
+            variant="contained" 
+            onClick={() => router.push("/dashboard")}
+            sx={{ mt: 2 }}
+          >
+            Back to Dashboard
+          </Button>
+        </Box>
       </Container>
     );
   }
